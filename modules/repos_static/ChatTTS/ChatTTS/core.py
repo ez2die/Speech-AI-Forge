@@ -63,7 +63,7 @@ class Chat:
         self,
         source: Literal["huggingface", "local", "custom"] = "local",
         force_redownload=False,
-        custom_path: Optional[torch.serialization.FILE_LIKE] = None,
+        custom_path: Optional[str] = None,
     ) -> Optional[str]:
         if source == "local":
             download_path = os.getcwd()
@@ -121,7 +121,7 @@ class Chat:
         source: Literal["huggingface", "local", "custom"] = "local",
         force_redownload=False,
         compile: bool = False,
-        custom_path: Optional[torch.serialization.FILE_LIKE] = None,
+        custom_path: Optional[str] = None,
         device: Optional[torch.device] = None,
         coef: Optional[torch.Tensor] = None,
         use_flash_attn=False,
@@ -411,7 +411,8 @@ class Chat:
     @torch.inference_mode()
     def _vocos_decode(self, spec: torch.Tensor) -> np.ndarray:
         if "mps" in str(self.device):
-            return self.vocos.decode(spec.cpu()).cpu().numpy()
+            # Convert to float32 when moving to CPU for Vocos compatibility
+            return self.vocos.decode(spec.cpu().float()).cpu().numpy()
         else:
             return self.vocos.decode(spec).cpu().numpy()
 

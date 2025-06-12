@@ -54,6 +54,12 @@ character_map = {
     "《": "，",
     "》": "，",
     "－": "，",
+    "'": " ",
+    """: " ",
+    "'": " ",
+    """: " ",
+    '"': " ",
+    "'": " ",
     ":": ",",
     ";": ",",
     "!": ".",
@@ -68,16 +74,6 @@ character_map = {
     "～": " ",
     "/": " ",
     "·": " ",
-}
-
-# 多字符替换映射（需要单独处理）
-multi_char_replacements = {
-    "'": " ",
-    """: " ",
-    "'": " ",
-    """: " ",
-    '"': " ",
-    "'": " ",
 }
 
 # -----------------------
@@ -119,17 +115,7 @@ def replace_quotes(text: str, guess_lang: GuessLang):
         ["'", "'"],
     ]
     for p in patterns:
-        # 确保模式有两个元素（开始和结束引号）
-        if len(p) >= 2:
-            try:
-                # 使用更安全的正则表达式
-                start_quote = re.escape(p[0])
-                end_quote = re.escape(p[1])
-                pattern = f"({start_quote}[^{start_quote}{end_quote}]*?{end_quote})"
-                text = re.sub(pattern, repl, text)
-            except (re.error, IndexError) as e:
-                # 如果正则表达式出错或索引错误，跳过这个模式
-                continue
+        text = re.sub(rf"({p[0]}[^{p[0]}{p[1]}]+?{p[1]})", repl, text)
     return text
 
 
@@ -175,15 +161,8 @@ def wetext_normalize(text: str, guss_lang: GuessLang):
 
 @BaseTN.block()
 def apply_character_map(text: str, guess_lang: GuessLang):
-    # 首先处理单字符替换
     translation_table = str.maketrans(character_map)
-    text = text.translate(translation_table)
-    
-    # 然后处理多字符替换
-    for old_char, new_char in multi_char_replacements.items():
-        text = text.replace(old_char, new_char)
-    
-    return text
+    return text.translate(translation_table)
 
 
 @BaseTN.block()
@@ -210,4 +189,4 @@ homo_replacer = HomophonesReplacer(
 def replace_homophones(text: str, guess_lang: GuessLang):
     if guess_lang.zh_or_en == "zh":
         text = homo_replacer.replace(text)
-    return text 
+    return text

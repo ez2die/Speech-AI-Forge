@@ -47,7 +47,11 @@ class ChatTTSInfer:
     def __init__(self, instance: Chat) -> None:
         self.instance = instance
         self.device = instance.device
-        self.dtype = devices.dtype
+        # Use float32 on MPS to avoid dtype conflicts
+        if "mps" in str(instance.device):
+            self.dtype = torch.float32
+        else:
+            self.dtype = devices.dtype
         ChatTTSInfer.current_infer = self
 
         if config.runtime_env_vars.debug_generate:

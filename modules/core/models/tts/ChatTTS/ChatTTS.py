@@ -23,7 +23,10 @@ def do_load_chat_tts():
     chat_tts = ChatTTS.Chat()
 
     device = devices.get_device_for("chattts")
-    dtype = devices.dtype
+    # Use float32 for ChatTTS on MPS to avoid dtype compatibility issues
+    dtype = torch.float32 if "mps" in str(device) else devices.dtype
+
+    experimental = "mps" in str(device)
 
     has_loaded = chat_tts.load(
         compile=config.runtime_env_vars.compile,
@@ -32,20 +35,35 @@ def do_load_chat_tts():
         source="custom",
         custom_path="./models/ChatTTS",
         device=device,
+        experimental=experimental,
     )
 
     if not has_loaded:
         chat_tts = None
         raise Exception("Failed to load ChatTTS models, please check the log")
 
-    all_modules: list[torch.nn.Module] = [
-        chat_tts.gpt,
-        chat_tts.dvae,
-        chat_tts.decoder,
-        chat_tts.vocos,
-    ]
-    for md in all_modules:
-        md.to(device=device, dtype=dtype)
+    # Don't force device migration for ChatTTS modules when using MPS
+    # ChatTTS has its own device management strategy for MPS compatibility
+    if "mps" not in str(device):
+        all_modules: list[torch.nn.Module] = [
+            chat_tts.gpt,
+            chat_tts.dvae,
+            chat_tts.decoder,
+            chat_tts.vocos,
+        ]
+        for md in all_modules:
+            md.to(device=device, dtype=dtype)
+    else:
+        # For MPS devices, ChatTTS manages device allocation internally
+        # Only set dtype for the modules that are not on CPU
+        if hasattr(chat_tts, 'dvae') and chat_tts.dvae:
+            chat_tts.dvae.to(dtype=dtype)
+        if hasattr(chat_tts, 'decoder') and chat_tts.decoder:
+            chat_tts.decoder.to(dtype=dtype)
+        # Vocos runs on CPU when MPS is detected, ensure it uses float32 for compatibility
+        if hasattr(chat_tts, 'vocos') and chat_tts.vocos:
+            chat_tts.vocos.to(dtype=torch.float32)
+        # Don't touch gpt as it's handled by ChatTTS internally
 
     # 如果 device 为 cpu 同时，又是 dtype == float16 那么报 warn
     # 提示可能无法正常运行，建议使用 float32 即开启 `--no_half` 参数

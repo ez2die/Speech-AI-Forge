@@ -1,9 +1,39 @@
 import logging
+import sys
 from typing import List, Literal, Union
 
-import python_ms as ms
 from box import Box
 from lxml import etree
+
+# Conditional import for python_ms (Windows only)
+try:
+    import python_ms as ms
+except ImportError:
+    # Fallback parser for non-Windows systems
+    def ms(time_str: str) -> int:
+        """
+        Simple fallback parser for time strings like '2s', '500ms', etc.
+        Returns time in milliseconds.
+        """
+        if not time_str:
+            return 0
+        
+        time_str = time_str.strip().lower()
+        
+        if time_str.endswith('ms'):
+            return int(float(time_str[:-2]))
+        elif time_str.endswith('s'):
+            return int(float(time_str[:-1]) * 1000)
+        elif time_str.endswith('m'):
+            return int(float(time_str[:-1]) * 60000)
+        elif time_str.endswith('h'):
+            return int(float(time_str[:-1]) * 3600000)
+        else:
+            # Assume milliseconds if no unit
+            try:
+                return int(float(time_str))
+            except ValueError:
+                return 0
 
 
 class SSMLContext(Box):

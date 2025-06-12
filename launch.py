@@ -1,5 +1,9 @@
 import logging
 import os
+import sys
+
+if sys.platform == "darwin":
+    os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 
 from modules.ffmpeg_env import setup_ffmpeg_path
 from modules.repos_static.sys_paths import setup_repos_paths

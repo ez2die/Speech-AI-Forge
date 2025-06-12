@@ -197,6 +197,15 @@ def get_cpu_memory():
 
 
 def get_gpu_memory():
+    if not torch.cuda.is_available():
+        # For non-CUDA devices (like MPS), return a placeholder
+        return MemUsage(
+            device=device,
+            total_mb=8192,  # 8GB placeholder
+            used_mb=0,
+            free_mb=8192,
+        )
+    
     total_memory = torch.cuda.get_device_properties(0).total_memory
     reserved_memory = torch.cuda.memory_reserved(0)
     allocated_memory = torch.cuda.memory_allocated(0)

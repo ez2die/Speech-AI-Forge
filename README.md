@@ -32,6 +32,22 @@ Speech-AI-Forge 是一个围绕 TTS 生成模型开发的项目，实现了 API 
 
 ## Installation and Running
 
+### 🍎 macOS Apple Silicon 用户
+
+如果您使用 Apple Silicon Mac (M1/M2/M3/M4)，我们提供了专门优化的版本：
+
+```bash
+# 一键安装（推荐）
+./install_macos.sh
+
+# 或手动使用macOS专用依赖
+pip install -r requirements.macos.txt
+```
+
+详细说明请查看 [macOS Apple Silicon指南](./README.macos.md)
+
+### 🐧 Linux / 🪟 Windows 用户
+
 首先，确保 [相关依赖](./docs/dependencies.md) 已经正确安装，并查看 [模型下载](#模型下载) 下载所需模型
 
 启动：

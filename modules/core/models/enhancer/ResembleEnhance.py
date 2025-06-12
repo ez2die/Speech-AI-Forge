@@ -52,7 +52,7 @@ class ResembleEnhance:
                 model=enhancer.denoiser,
                 dwav=dwav,
                 sr=sr,
-                device=self.devicem,
+                device=self.device,
                 dtype=self.dtype,
             )
 
@@ -89,8 +89,12 @@ def load_enhancer() -> ResembleEnhance:
     with lock:
         if resemble_enhance is None:
             logger.info("Loading ResembleEnhance model")
+            device = devices.get_device_for("enhancer")
+            # Use float32 for ResembleEnhance to avoid compatibility issues with STFT
+            # torch.stft can have issues with float16 on some platforms
+            dtype = torch.float32 if "mps" in str(device) else devices.dtype
             resemble_enhance = ResembleEnhance(
-                device=devices.get_device_for("enhancer"), dtype=devices.dtype
+                device=device, dtype=dtype
             )
             resemble_enhance.load_model()
             logger.info("ResembleEnhance model loaded")
