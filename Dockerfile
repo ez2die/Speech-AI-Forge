@@ -1,26 +1,58 @@
-FROM fabridamicelli/torchserve:0.12.0-gpu-python3.10
+# Multi-stage build for Speech-AI-Forge
+FROM python:3.10-slim as base
+
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
 # Set working directory
 WORKDIR /app
 
-# Use root to install necessary software
-USER root
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    rubberband-cli \
+    git \
+    wget \
+    curl \
+    build-essential \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Update APT sources to use a faster mirror (Tsinghua), install dependencies, and clean up to reduce image size
-RUN sed -i s@/archive.ubuntu.com/@/mirrors.tuna.tsinghua.edu.cn/@g /etc/apt/sources.list && \
-    apt-get update -y --allow-unauthenticated --fix-missing && \
-    apt-get install -y --no-install-recommends \
-        software-properties-common \
-        ffmpeg \
-        rubberband-cli && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /etc/apt/sources.list.d/cuda.list
+# GPU variant (CUDA)
+FROM base as gpu
+RUN pip install torch torchaudio torchvision --index-url https://download.pytorch.org/whl/cu121
 
-# Copy the requirements file for Python dependencies
-COPY requirements.txt ./requirements.txt
+# CPU variant
+FROM base as cpu  
+RUN pip install torch torchaudio torchvision --index-url https://download.pytorch.org/whl/cpu
 
-# Install Python dependencies using Tsinghua's PyPI mirror and clean up cache to reduce image size
-RUN pip install --no-cache-dir -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+# Choose the appropriate base stage based on build argument
+ARG COMPUTE_TYPE=cpu
+FROM ${COMPUTE_TYPE} as final
 
-# Set the default command (modify as needed based on your application)
-CMD ["bash"]
+# Copy requirements and install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY . .
+
+# Create data directories
+RUN mkdir -p /app/data/speakers /app/models /app/logs
+
+# Set permissions
+RUN chmod +x /app/launch.py /app/webui.py
+
+# Expose ports
+EXPOSE 7870 7860
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:7870/health || exit 1
+
+# Default command
+CMD ["python", "launch.py"]

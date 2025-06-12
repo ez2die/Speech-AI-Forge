@@ -119,23 +119,50 @@ python launch.py
 
 ## Docker
 
-### 镜像
+### 🐳 一键部署 (推荐)
 
-WIP 开发中
+```bash
+# CPU模式 (兼容所有平台)
+./docker-deploy.sh up
 
-### 手动 build
+# GPU模式 (NVIDIA GPU)
+./docker-deploy.sh up-gpu
+```
 
-下载模型: `python -m scripts.download_models --source modelscope`
+部署完成后访问：
+- **WebUI**: http://localhost:7860
+- **API**: http://localhost:7870
+- **API文档**: http://localhost:7870/docs
 
-> 此脚本将下载 `chat-tts` 和 `enhancer` 模型，如需下载其他模型，请看后续的 `模型下载` 介绍
+### 📋 系统要求
 
-- webui: `docker-compose -f ./docker-compose.webui.yml up -d`
-- api: `docker-compose -f ./docker-compose.api.yml up -d`
+**基础要求:**
+- Docker 20.10+
+- Docker Compose 2.0+
+- 8GB+ RAM
 
-环境变量配置
+**GPU模式额外要求:**
+- NVIDIA GPU + Driver
+- NVIDIA Docker Runtime
 
-- webui: [.env.webui](./.env.webui)
-- api: [.env.api](./.env.api)
+### 🎯 部署模式
+
+| 模式 | 适用场景 | 性能 | 兼容性 |
+|------|----------|------|--------|
+| CPU | 开发/测试 | 较慢 | ✅ 全平台 |
+| GPU | 生产环境 | 快速 | ⚡ NVIDIA GPU |
+
+### 🛠️ 管理命令
+
+```bash
+./docker-deploy.sh build    # 构建镜像
+./docker-deploy.sh status   # 查看状态
+./docker-deploy.sh logs     # 查看日志
+./docker-deploy.sh down     # 停止服务
+./docker-deploy.sh clean    # 清理资源
+```
+
+详细文档请查看 [Docker部署指南](./README.docker.md)
 
 ## 模型支持
 

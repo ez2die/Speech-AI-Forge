@@ -1,32 +1,86 @@
-.DS_Store
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.pytest_cache
+*.egg-info
+dist
+build
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+
+# IDE
+.idea/
+.vscode/
 *.swp
 *.swo
-*.git
-
-/build
-/doc
-/.pytest_cache
-/__pycache__
-/build/*
-/doc/*
-/.pytest_cache/*
-
-.idea
-.vscode
 *.iml
-*.class
+.DS_Store
 
-venv
-/venv
-/.venv
-/pip-wheel
-/pip-wheelhouse
-/pip-cache
-requirements.txt
-requirements.lock
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Development files
 *.log
+*.pid
+*.seed
+*.coverage
+.nyc_output
 
+# Test files
 test/
 tests/
 *_test.py
 *_tests.py
+pytest.ini
+
+# Documentation
+docs/
+README*.md
+*.md
+
+# Models and data (mounted as volumes)
+models/
+data/
+logs/
+
+# Backup files
+*.backup
+*.bak
+*.tmp
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Package files
+*.tar.gz
+*.zip
+*.rar
+
+# Cache
+.cache/
+*.cache
+
+# Jupyter
+.ipynb_checkpoints
+
+# Mac
+.DS_Store
+.AppleDouble
+.LSOverride

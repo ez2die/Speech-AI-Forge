@@ -1,0 +1,114 @@
+version: "3.8"
+
+services:
+  # API Service (CPU)
+  speech-ai-forge-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        COMPUTE_TYPE: cpu
+    container_name: speech-ai-forge-api
+    restart: unless-stopped
+    ports:
+      - "7870:7870"
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./logs:/app/logs
+    environment:
+      - USE_CPU=all
+      - API_PORT=7870
+      - API_HOST=0.0.0.0
+    command: python launch.py --host 0.0.0.0 --port 7870
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7870/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # WebUI Service (CPU)
+  speech-ai-forge-webui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        COMPUTE_TYPE: cpu
+    container_name: speech-ai-forge-webui
+    restart: unless-stopped
+    ports:
+      - "7860:7860"
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./logs:/app/logs
+    environment:
+      - USE_CPU=all
+      - WEBUI_PORT=7860
+      - WEBUI_HOST=0.0.0.0
+    command: python webui.py --server_name 0.0.0.0 --server_port 7860
+    depends_on:
+      - speech-ai-forge-api
+
+  # API Service (GPU) - for NVIDIA GPU systems
+  speech-ai-forge-api-gpu:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        COMPUTE_TYPE: gpu
+    container_name: speech-ai-forge-api-gpu
+    restart: unless-stopped
+    ports:
+      - "7871:7870"
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./logs:/app/logs
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - API_PORT=7870
+      - API_HOST=0.0.0.0
+    command: python launch.py --host 0.0.0.0 --port 7870
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
+    profiles: ["gpu"]
+
+  # WebUI Service (GPU) - for NVIDIA GPU systems
+  speech-ai-forge-webui-gpu:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        COMPUTE_TYPE: gpu
+    container_name: speech-ai-forge-webui-gpu
+    restart: unless-stopped
+    ports:
+      - "7861:7860"
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./logs:/app/logs
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - WEBUI_PORT=7860
+      - WEBUI_HOST=0.0.0.0
+    command: python webui.py --server_name 0.0.0.0 --server_port 7860
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
+    depends_on:
+      - speech-ai-forge-api-gpu
+    profiles: ["gpu"]
+
+volumes:
+  models:
+  data:
+  logs: 
